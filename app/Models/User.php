@@ -3,14 +3,22 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasUuids;
+
+
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     /**
      * The attributes that are mass assignable.
@@ -20,6 +28,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'role',
+        'status',
+        'phone_number',
         'password',
     ];
 
@@ -45,4 +56,25 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+   public function hasRole(string $role): bool
+   {
+       return $this->role === $role;
+   }
+   public function isSuperAdmin(): bool
+   {
+       return $this->hasRole('superadmin');
+   }
+   public function isAdmin(): bool
+   {
+       return $this->hasRole('admin');
+   }
+   public function isManager(): bool
+   {
+       return $this->hasRole('manager');
+   }
+   public function isUser(): bool
+   {
+       return $this->hasRole('user');
+   }
 }
