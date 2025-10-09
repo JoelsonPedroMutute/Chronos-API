@@ -21,6 +21,8 @@ class UserResource extends JsonResource
             'phone_number' => $this->phone_number,
             'role' => $this->role,
             'status' => $this->status,
+            'image' => $this->image ? asset('storage/'.$this->image) : null,
+            'has_image' => !is_null($this->image),
         ];
     }
 }
