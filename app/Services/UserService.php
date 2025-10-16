@@ -6,6 +6,9 @@ use App\Models\User;
 use App\Filters\UserFilter;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
+
+use function Laravel\Prompts\password;
 
 class UserService
 {
@@ -50,4 +53,49 @@ class UserService
         ]);
         return $user->fresh();
     }
+    public function changeRole(User $user, array $data): User
+    {
+        $user->update([
+            'role' => $data['role'],
+        ]);
+        return $user->fresh();
+    }
+    public function sendPasswordResetEmail(string $email): void
+    {
+        $user = User::where('email', $email)->firstOrFail();
+        $user->sendPasswordResetNotification(
+            $user->createToken('reset_token')->plainTextToken
+        );
+    }
+     public function resetPassword(array $data): void
+     {
+        $status = Password::reset($data, function($user, $password){
+            $user->password = bcrypt($password);
+            $user->save();
+
+            $user->tokens()->delete();
+        });
+         if($status !== Password::PASSWORD_RESET)
+         {
+            throw new Exception('Erro ao redefinir a senha.');
+         }
+     }
+      public function changePassword(string $id, array $data): void
+      {
+        $user = User::findOrFail($id);
+        $user->update([
+            'password' => bcrypt($data['password']),
+        ]);
+        $user->tokens()->delete();
+      }
+       public function destroy(string $id): void
+       {
+        $user = User::findOrFail($id);
+        $user->delete();
+       }
+       public function delete(string $id): void
+       {
+        $user = User::findOrFail($id);
+        $user->delete();
+       }
 }

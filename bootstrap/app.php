@@ -25,5 +25,46 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
+    //  Exceções de autenticação
+    $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Não autenticado. Faça login novamente.',
+        ], 401);
+    });
+
+    // 🔹 Exceções de autorização
+    $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, $request) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Você não tem permissão para realizar esta ação.',
+        ], 403);
+    });
+
+    // 🔹 Recurso não encontrado
+    $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, $request) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Recurso não encontrado.',
+        ], 404);
+    });
+
+    // 🔹 Erros de validação
+    $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erro de validação nos dados enviados.',
+            'errors' => $e->errors(),
+        ], 422);
+    });
+
+    // 🔹 Erros genéricos (fallback)
+    $exceptions->render(function (Throwable $e, $request) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Ocorreu um erro interno no servidor.',
+            // ⚠️ Em produção, é melhor comentar esta linha:
+            'error' => $e->getMessage(),
+        ], 500);
+    });
+})->create();

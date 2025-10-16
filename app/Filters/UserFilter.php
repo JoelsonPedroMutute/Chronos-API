@@ -3,12 +3,13 @@
 namespace App\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class UserFilter extends QueryFilter
 {
     public function applyFilters(): Builder
     {
+        $this->applyRoleRestrictions();
         $this->filterByRole();
         $this->filterByStatus();
         $this->filterByName();
@@ -18,6 +19,31 @@ class UserFilter extends QueryFilter
         return $this->query;
     }
 
+    protected function applyRoleRestrictions(): void
+{
+    $authUser = $this->request->user();
+
+    Log::info('Filtro de role aplicado', [
+        'authUser' => $authUser ? $authUser->role : 'guest',
+    ]);
+
+    if (!$authUser) {
+        return;
+    }
+
+    switch ($authUser->role) {
+        case 'admin':
+            Log::info('Admin filtrando usuários: excluindo superadmins');
+            $this->query->where('role', '!=', 'superadmin');
+            break;
+
+        case 'manager':
+        case 'user':
+            Log::info('Manager/User filtrando: somente ele mesmo');
+            $this->query->where('id', $authUser->id);
+            break;
+    }
+}
     protected function filterByRole(): void
     {
         if ($role = $this->input('role')) {
@@ -28,8 +54,8 @@ class UserFilter extends QueryFilter
     protected function filterByStatus(): void
     {
         if ($status = $this->input('status')) {
-            if (in_array($status, ['active', 'inactive'])) {
-                $this->query->where('active', $status === 'active' ? 1 : 0);
+            if (in_array($status, ['active', 'inactive', 'pending'])) {
+                $this->query->where('status', $status);
             }
         }
     }

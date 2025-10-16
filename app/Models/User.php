@@ -58,24 +58,28 @@ class User extends Authenticatable
         ];
     }
 
-   public function hasRole(string $role): bool
-   {
-       return $this->role === $role;
-   }
-   public function isSuperAdmin(): bool
-   {
-       return $this->hasRole('superadmin');
-   }
-   public function isAdmin(): bool
-   {
-       return $this->hasRole('admin');
-   }
-   public function isManager(): bool
-   {
-       return $this->hasRole('manager');
-   }
-   public function isUser(): bool
-   {
-       return $this->hasRole('user');
-   }
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('superadmin');
+    }
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+    public function isManager(): bool
+    {
+        return $this->hasRole('manager');
+    }
+    public function isUser(): bool
+    {
+        return $this->hasRole('user');
+    }
+    public function getRouteKeyName()
+    {
+        return 'id';
+    }
 }
