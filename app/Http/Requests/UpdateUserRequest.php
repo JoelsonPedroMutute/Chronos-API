@@ -33,4 +33,20 @@ class UpdateUserRequest extends FormRequest
             'password'=>'sometimes|string|min:8|confirmed',
         ];
     }
+     public function messages(): array
+    {
+        return [
+            'name.required' => 'O campo nome é obrigatório.',
+            'email.required' => 'O campo email é obrigatório.',
+            'email.email' => 'O campo email deve ser um endereço de email válido.',
+            'email.unique' => 'O email informado já está em uso.',
+            'role.required' => 'O campo função é obrigatório.',
+            'role.in' => 'O campo função deve ser um dos seguintes valores: superadmin, admin, manager, user.',
+            'status.required' => 'O campo status é obrigatório.',
+            'status.in' => 'O campo status deve ser um dos seguintes valores: active, inactive.',
+            'password.required' => 'O campo senha é obrigatório.',
+            'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
+            'password.confirmed' => 'A confirmação da senha não corresponde.',
+        ];
+    }   
 }

@@ -24,10 +24,15 @@ class Employee extends Model
         'address',
         'position',
         'settings',
+        'image',
         'company_id',
         'employee_category_id',
     ];
 
+    public function user()
+    {
+        return $this->hasOne(User::class, 'employee_id', 'id');
+    }
     public function company()
     {
         return $this->belongsTo(Companies::class);
@@ -39,5 +44,9 @@ class Employee extends Model
     public function punches()
     {
         return $this->hasMany(Punches::class);
+    }
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
     }
 }

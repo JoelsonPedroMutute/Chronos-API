@@ -57,6 +57,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'id');
+    }
 
     public function hasRole(string $role): bool
     {
