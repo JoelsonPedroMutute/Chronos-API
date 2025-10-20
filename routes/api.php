@@ -105,8 +105,11 @@ Route::prefix('v1')->group(function () {
 
         // Criação e listagem
         Route::post('employees', [EmployeeController::class, 'store']);
-        Route::get('employees', [EmployeeController::class, 'index']);
-        Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByCompany']);
+Route::get('employees/profile', [EmployeeController::class, 'profile']); // ✅ corrigido e movido para cima
+Route::get('employees', [EmployeeController::class, 'index']);
+Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByCompany']);
+
+
 
         // Visualização individual
         Route::get('employees/{id}', [EmployeeController::class, 'show']);

@@ -3,14 +3,11 @@
 namespace App\Services;
 
 use App\Filters\EmployeeFilter;
-use App\Models\Employeer;
-use App\Filters\EmployeerFilter;
 use App\Models\Employee;
-use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Illumiate\Support\Facades\Log;
-use Illumiate\Support\Facades\Auth;
- use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
+use Exception;
 
 class EmployeeService
 {
@@ -21,36 +18,44 @@ class EmployeeService
 
         return $filter->apply()->paginate($request->input('per_page', 10));
     }
-    public function getById(string $id, EmployeeFilter $filter): Employee
+
+    public function getById(string $id, ?Employee $contextEmployee = null): Employee
     {
         $query = Employee::where('id', $id);
-        $filteredQuery = $filter->apply($query);
-        return $filteredQuery->firstOrFail();
-    }
-    /**
-     * Retorna todos os funcionários de uma determinada empresa.
-     *
-     * @param  string  $companyId
-     * @param  EmployeeFilter  $filter
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\Employee>
-     */
-   
 
-    public function getByCompany(string $companyId, EmployeeFilter $filter): Collection
-    {
-        $query = Employee::where('company_id', $companyId);
-        $filteredQuery = $filter->apply($query);
-
-        return $filteredQuery->get();
-    }
-
-    public function create(array $data): Employee
-    {
-        if (Employee::where('email', $data['email'])->exists()) {
-            throw new Exception('Email já está em uso.');
+        if ($contextEmployee) {
+            $query->where('company_id', $contextEmployee->company_id);
         }
-        return Employee::create($data);
+
+        return $query->firstOrFail();
     }
+
+    public function getByCompany(string $companyId): Collection
+    {
+        return Employee::where('company_id', $companyId)->get();
+    }
+
+   public function create(array $data): Employee
+{
+    $user = Auth::user();
+
+    if (!$user) {
+        throw new Exception('Usuário não autenticado.');
+    }
+
+    if (Employee::where('email', $data['email'])->exists()) {
+        throw new Exception('Email já está em uso.');
+    }
+
+    // Herda role e empresa do criador
+    $data['role'] = $user->role ?? 'user';
+    $data['user_id'] = $user->id;
+    $data['company_id'] = $user->employee->company_id ?? null;
+
+    return Employee::create($data);
+}
+
+
     public function update(Employee $employee, array $data): Employee
     {
         if (
@@ -64,15 +69,16 @@ class EmployeeService
         $employee->update($data);
         return $employee->fresh();
     }
+
     public function updateSettings(Employee $employee, array $settings): Employee
     {
         $currentSettings = $employee->settings ?? [];
-        $newSettings = array_merge($currentSettings, $settings);
-        $employee->settings = $newSettings;
+        $employee->settings = array_merge($currentSettings, $settings);
         $employee->save();
 
         return $employee->fresh();
     }
+
     public function delete(Employee $employee): void
     {
         if ($employee->user) {
