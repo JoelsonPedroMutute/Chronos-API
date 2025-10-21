@@ -16,6 +16,8 @@ class EmployeeFilter extends QueryFilter
         $this->filterByPosition();
         $this->filterByCompanyId();
         $this->filterByEmployeeCategoryId();
+        $this->filterByStatus();
+        $this->filterByRole();
 
         return $this->query;
     }
@@ -61,6 +63,20 @@ class EmployeeFilter extends QueryFilter
     {
         if ($employeeCategoryId = $this->input('employee_category_id')) {
             $this->query->where('employee_category_id', $employeeCategoryId);
+        }
+    }
+    protected function filterByStatus(): void
+    {
+        if ($status = $this->input('status')) {
+            $this->query->where('status', $status);
+        }
+    }
+    protected function filterByRole(): void
+    {
+        if ($role = $this->input('role')) {
+            $this->query->whereHas('user', function ($query) use ($role) {
+                $query->where('role', $role);
+            });
         }
     }
 }

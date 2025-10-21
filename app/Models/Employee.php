@@ -14,9 +14,10 @@ class Employee extends Model
 {
     use HasFactory, HasUuids;
 
-     /** @use HasFactory<\Database\Factories\EmployeeFactory> */    
+    /** @use HasFactory<\Database\Factories\EmployeeFactory> */
 
     protected $fillable = [
+        'user_id',
         'first_name',
         'last_name',
         'email',
@@ -24,6 +25,10 @@ class Employee extends Model
         'address',
         'position',
         'settings',
+        'hire_date',
+        'role',
+        'salary',
+        'department',
         'image',
         'company_id',
         'employee_category_id',
@@ -31,8 +36,10 @@ class Employee extends Model
 
     public function user()
     {
-        return $this->hasOne(User::class, 'employee_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
+
+
     public function company()
     {
         return $this->belongsTo(Companies::class);

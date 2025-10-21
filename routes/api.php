@@ -105,9 +105,9 @@ Route::prefix('v1')->group(function () {
 
         // Criação e listagem
         Route::post('employees', [EmployeeController::class, 'store']);
-Route::get('employees/profile', [EmployeeController::class, 'profile']); // ✅ corrigido e movido para cima
-Route::get('employees', [EmployeeController::class, 'index']);
-Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByCompany']);
+        Route::get('employees/profile', [EmployeeController::class, 'profile']); // ✅ corrigido e movido para cima
+        Route::get('employees', [EmployeeController::class, 'index']);
+        Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByCompany']);
 
 
 
@@ -117,6 +117,8 @@ Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByC
         // Atualizações
         Route::patch('employees/{employee}', [EmployeeController::class, 'update']);
         Route::patch('employees/{employee}/settings', [EmployeeController::class, 'updateSettings']);
+        Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
+        Route::patch('employees/{employee}/role', [EmployeeController::class, 'updateRole']);
 
         // Exclusão (soft delete)
         Route::delete('employees/{employee}', [EmployeeController::class, 'destroy']);
@@ -132,7 +134,11 @@ Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByC
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->group(function () {
         Route::apiResource('employees.image', EmployeeImageController::class)->only([
-            'index', 'show', 'store', 'update', 'destroy'
+            'index',
+            'show',
+            'store',
+            'update',
+            'destroy'
         ]);
     });
 });

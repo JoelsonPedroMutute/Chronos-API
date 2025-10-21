@@ -19,7 +19,7 @@ class EmployeeResource extends JsonResource
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'email' => $this->email,
-            'phone' => $this->phone,
+            'phone' => $this->phone_number,
             'image' => $this->image ? asset('storage/'.$this->image) : null,
             'has_image' => !is_null($this->image),
             'address' => $this->address,

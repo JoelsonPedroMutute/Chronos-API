@@ -10,6 +10,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Support\Facades\Auth;
+
 
 class EmployeeController extends Controller
 {
@@ -50,9 +52,10 @@ class EmployeeController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Perfil do empregado encontrado com sucesso.',
-            'data' => new EmployeeResource($employee),
+            'data' => new EmployeeResource($employee->load(['user', 'company'])),
         ], 200);
     }
+
 
     public function show(Request $request, $id)
     {
@@ -111,13 +114,8 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
+        $this->authorize('create', Employee::class);
 
-        if (!$user->employee || !$user->employee->hasRole('manager')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ação não autorizada.',
-            ], 403);
-        }
 
         $employee = $this->employeeService->create($request->all());
 
@@ -137,6 +135,38 @@ class EmployeeController extends Controller
             'success' => true,
             'message' => 'Empregado atualizado com sucesso.',
             'data' => new EmployeeResource($updatedEmployee),
+        ], 200);
+    }
+     public function updateStatus(Request $request, Employee $employee)
+    {
+        $this->authorize('update', $employee);
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:active,inactive',
+        ]);
+
+        $employee = $this->employeeService->updateStatus($employee, $validated['status']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status do empregado atualizado com sucesso.',
+            'data' => new EmployeeResource($employee),
+        ], 200);
+    }
+     public function updateRole(Request $request, Employee $employee)
+    {
+        $this->authorize('update', $employee);
+
+        $validated = $request->validate([
+            'role' => 'required|string|in:superadmin,admin,manager,user',
+        ]);
+
+        $employee = $this->employeeService->updateRole($employee, $validated['role']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Função do empregado atualizada com sucesso.',
+            'data' => new EmployeeResource($employee),
         ], 200);
     }
 
