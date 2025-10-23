@@ -45,6 +45,7 @@ class UpdateEmployeeRequest extends FormRequest
         // SuperAdmin e Admin – regras completas
         if ($user->hasRole('superadmin') || $user->hasRole('admin')) {
             return [
+                'user_id' => 'nullable|exists:users,id|unique:employees,user_id,' . $this->route('employee'),
                 'first_name' => 'sometimes|required|string|max:100',
                 'last_name' => 'sometimes|required|string|max:100',
                 'email' => 'sometimes|required|string|email|max:255|unique:employees,email,' . $this->route('employee'),

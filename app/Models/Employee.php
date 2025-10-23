@@ -28,6 +28,7 @@ class Employee extends Model
         'hire_date',
         'role',
         'salary',
+        'status',
         'department',
         'image',
         'company_id',

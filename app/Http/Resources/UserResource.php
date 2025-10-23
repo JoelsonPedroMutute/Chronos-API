@@ -23,6 +23,27 @@ class UserResource extends JsonResource
             'status' => $this->status,
             'image' => $this->image ? asset('storage/'.$this->image) : null,
             'has_image' => !is_null($this->image),
+
+            // 👇 Aqui adicionamos o empregado relacionado
+            'employee' => $this->whenLoaded('employee', function () {
+                return [
+                    'id' => $this->employee->id,
+                    'first_name' => $this->employee->first_name,
+                    'last_name' => $this->employee->last_name,
+                    'email' => $this->employee->email,
+                    'phone' => $this->employee->phone_number,
+                    'address' => $this->employee->address,
+                    'hire_date' => $this->employee->hire_date,
+                    'category' => $this->employee->employeeCategory?->name,
+                    'company' => [
+                        'id' => $this->employee->company?->id,
+                        'name' => $this->employee->company?->name,
+                        'address' => $this->employee->company?->address,
+                        'phone' => $this->employee->company?->phone,
+                        'email' => $this->employee->company?->email,
+                    ],
+                ];
+            }),
         ];
     }
 }

@@ -4,9 +4,13 @@ namespace App\Services;
 
 use App\Filters\EmployeeFilter;
 use App\Models\Employee;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+
 use Exception;
 
 class EmployeeService
@@ -45,50 +49,144 @@ class EmployeeService
     {
         return Employee::where('company_id', $companyId)->get();
     }
-
     public function create(array $data): Employee
     {
-        $user = Auth::user();
+        $authUser = Auth::user();
 
-        if (!$user) {
+        if (!$authUser) {
             throw new Exception('Usuário não autenticado.');
         }
 
-        if (Employee::where('email', $data['email'])->exists()) {
-            throw new Exception('Email já está em uso.');
+        // 🔹 Evita duplicidade de email entre employees e users
+        if (!empty($data['email'])) {
+            if (Employee::where('email', $data['email'])->exists()) {
+                throw new Exception('Email já está em uso por outro empregado.');
+            }
+
+            if (User::where('email', $data['email'])->exists()) {
+                throw new Exception('Email já está em uso por outro usuário do sistema.');
+            }
         }
 
-        // Caso venha "name" completo
+        // 🔹 Verifica se o employee está vinculado a um user
+        if (!empty($data['user_id'])) {
+            $user = User::find($data['user_id']);
+
+            if (!$user) {
+                throw new Exception('Usuário associado não encontrado.');
+            }
+
+            // 🔹 Impede associar o mesmo user a outro employee
+            if (Employee::where('user_id', $data['user_id'])->exists()) {
+                throw new Exception('Este usuário já está associado a outro empregado.');
+            }
+
+            // 🔹 Se o email não foi informado, herda o email do user
+            if (empty($data['email'])) {
+                $data['email'] = $user->email;
+            }
+
+            // 🔹 Se o email foi informado e for diferente do user, bloqueia
+            if (!empty($data['email']) && $data['email'] !== $user->email) {
+                throw new Exception('O email do empregado deve coincidir com o email do usuário associado.');
+            }
+
+            // ✅ Atualiza o role e status do user, se vierem no payload
+            $validRoles = ['superadmin', 'admin', 'manager', 'user'];
+
+            if (!empty($data['role'])) {
+                if (!in_array($data['role'], $validRoles)) {
+                    throw new Exception('O cargo informado não é válido. Valores permitidos: superadmin, admin, manager, user.');
+                }
+
+                $user->role = $data['role'];
+            }
+
+            if (!empty($data['status'])) {
+                $user->status = $data['status'];
+            }
+
+            $user->save();
+
+            $data['user_id'] = $user->id;
+        }
+
+
+        // 🔹 2. Se tiver o campo 'name', separa em 'first_name' e 'last_name'
         if (!empty($data['name'])) {
-            $parts = explode(' ', trim($data['name']));
+            $parts = explode(' ', trim($data['name']), 2);
             $data['first_name'] = $parts[0];
             $data['last_name'] = $parts[1] ?? null;
             unset($data['name']);
         }
 
-        // Caso venha first_name e last_name separados (preferível)
-        if (empty($data['first_name'])) {
-            throw new Exception('O campo "first_name" é obrigatório.');
+        // 🔹 3. Verifica se o hire_date é uma data futura
+        if (!empty($data['hire_date'])) {
+            $hireDate = Carbon::parse($data['hire_date']);
+            if ($hireDate->isFuture()) {
+                throw new Exception('A data de contratação não pode ser uma data futura.');
+            }
         }
 
-        if (!array_key_exists('last_name', $data)) {
-            $data['last_name'] = null;
-        }
+        // 🔹 4. Define o company_id herdado do user autenticado (caso não venha no request)
+        $data['company_id'] = $data['company_id'] ?? $authUser->employee?->company_id ?? null;
 
-        // Herda automaticamente dados do usuário autenticado
-        $data['role'] = $user->role ?? 'user';
-        $data['user_id'] = $user->id;
-        $data['company_id'] = $user->employee->company_id ?? null;
-
-        // Campos opcionais
+        // 🔹 5. Define campos opcionais com valor padrão
+        $data['phone_number'] = $data['phone_number'] ?? null;
         $data['position'] = $data['position'] ?? null;
+        $data['employee_category_id'] = $data['employee_category_id'] ?? null;
+        $data['address'] = $data['address'] ?? null;
         $data['department'] = $data['department'] ?? null;
-        $data['salary'] = $data['salary'] ?? 0;
+        $data['salary'] = $data['salary'] ?? null;
 
+        $user = null;
+
+        // 🔹 6. Se 'user_id' foi informado, associa o funcionário ao usuário existente
+        if (!empty($data['user_id'])) {
+            $user = User::find($data['user_id']);
+
+            if (!$user) {
+                throw new Exception('Usuário associado não encontrado.');
+            }
+
+            if (Employee::where('user_id', $data['user_id'])->exists()) {
+                throw new Exception('Este usuário já está associado a outro empregado.');
+            }
+
+            $data['user_id'] = $user->id;
+        }
+
+        // 🔹 7. Se 'create_user' = true, cria uma conta de acesso vinculada
+        elseif (!empty($data['create_user']) && $data['create_user'] === true) {
+            $validRoles = ['superadmin', 'admin', 'manager', 'user'];
+            $role = in_array($data['role'] ?? '', $validRoles) ? $data['role'] : 'user';
+
+            $user = User::create([
+                'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
+                'email' => $data['email'],
+                'password' => Hash::make($data['password'] ?? 'defaultpassword'),
+                'role' => $role,
+                'status' => $data['status'] ?? 'active',
+            ]);
+
+            $data['user_id'] = $user->id;
+        }
+
+        // 🔹 8. Caso contrário, cria apenas o empregado (sem conta de acesso)
+        else {
+            $data['user_id'] = null;
+        }
+
+        // 🔹 9. Cria o Employee
         $employee = Employee::create($data);
+
+        // 🔹 10. Carrega as relações úteis
         $employee->load('user', 'company', 'employeeCategory');
+
         return $employee;
     }
+
+
 
 
 

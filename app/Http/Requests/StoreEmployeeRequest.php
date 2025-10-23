@@ -23,10 +23,11 @@ class StoreEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'user_id' => 'nullable|exists:users,id|unique:employees,user_id',
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:employees',
-            'hire_date' => 'required|date',
+            'hire_date' => 'required|date|before_or_equal:today',
             'status' => 'required|string|in:active,inactive,on_leave',
             'salary' => 'required|numeric|min:0',
             'role' => 'required|string|in:admin,employee',
