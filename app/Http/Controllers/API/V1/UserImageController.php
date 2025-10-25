@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Service\ImageService;
 use App\Services\ImageService as ServicesImageService;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Str;
 
 class UserImageController extends Controller
 {
@@ -21,20 +24,28 @@ class UserImageController extends Controller
     /**
      * Upload ou atualização da imagem do usuário
      */
-    public function store(Request $request, User $user)
-    {
+public function store(Request $request, $userId)
+{
+     if(!Str::isUuid($userId)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'ID de usuário inválido.',
+        ], 400);
+    }
+    try {
+        $user = User::findOrFail($userId); 
         $this->authorize('manageImage', $user);
 
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
         ]);
 
-        // Apaga imagem antiga, se existir
+        // Apaga imagem antiga
         if ($user->image && Storage::disk('public')->exists($user->image)) {
             Storage::disk('public')->delete($user->image);
         }
 
-        // Faz upload com nome único e registra log
+        // Faz upload da nova imagem
         $imagePath = $this->imageService->uploadImage($request->file('image'), 'users', $user->id);
         $user->update(['image' => $imagePath]);
 
@@ -45,7 +56,24 @@ class UserImageController extends Controller
                 'image' => $this->imageService->showImage($imagePath),
             ]
         ], 200);
+
+    } catch (ModelNotFoundException $e) {
+        //  Personalização do erro "User não encontrado"
+        return response()->json([
+            'success' => false,
+            'message' => 'Usuário não encontrado.',
+            'error' => $e->getModel(),
+        ], 404);
+
+    } catch (Exception $e) {
+        // 🔴Captura qualquer outro erro inesperado
+        return response()->json([
+            'success' => false,
+            'message' => 'Ocorreu um erro ao atualizar a imagem.',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     /**
      * Mostrar imagem do usuário

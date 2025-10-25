@@ -57,7 +57,7 @@ class EmployeeService
             throw new Exception('Usuário não autenticado.');
         }
 
-        // 🔹 Evita duplicidade de email entre employees e users
+        //  Evita duplicidade de email entre employees e users
         if (!empty($data['email'])) {
             if (Employee::where('email', $data['email'])->exists()) {
                 throw new Exception('Email já está em uso por outro empregado.');
@@ -68,7 +68,7 @@ class EmployeeService
             }
         }
 
-        // 🔹 Verifica se o employee está vinculado a um user
+        //  Verifica se o employee está vinculado a um user
         if (!empty($data['user_id'])) {
             $user = User::find($data['user_id']);
 
@@ -76,22 +76,27 @@ class EmployeeService
                 throw new Exception('Usuário associado não encontrado.');
             }
 
-            // 🔹 Impede associar o mesmo user a outro employee
+            // Impede associar o mesmo user a outro employee
             if (Employee::where('user_id', $data['user_id'])->exists()) {
                 throw new Exception('Este usuário já está associado a outro empregado.');
             }
+            $data['user_id'] = $user->id;
 
-            // 🔹 Se o email não foi informado, herda o email do user
+            // herda o role e status do user, se não vierem no payload
+            $data['role'] = $data['role'] ?? $user->role;
+            $data['status'] = $data['status'] ?? $user->status;
+
+            //  Se o email não foi informado, herda o email do user
             if (empty($data['email'])) {
                 $data['email'] = $user->email;
             }
 
-            // 🔹 Se o email foi informado e for diferente do user, bloqueia
+            //  Se o email foi informado e for diferente do user, bloqueia
             if (!empty($data['email']) && $data['email'] !== $user->email) {
                 throw new Exception('O email do empregado deve coincidir com o email do usuário associado.');
             }
 
-            // ✅ Atualiza o role e status do user, se vierem no payload
+            //  Atualiza o role e status do user, se vierem no payload
             $validRoles = ['superadmin', 'admin', 'manager', 'user'];
 
             if (!empty($data['role'])) {
@@ -170,6 +175,10 @@ class EmployeeService
             ]);
 
             $data['user_id'] = $user->id;
+
+            // mantém o role e status do employee sincronizados com o user
+            $data['role'] = $user->role;
+            $data['status'] = $user->status;
         }
 
         // 🔹 8. Caso contrário, cria apenas o empregado (sem conta de acesso)

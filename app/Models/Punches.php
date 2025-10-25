@@ -7,6 +7,9 @@ use App\Models\Employee;
 use App\Models\Companies;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @mixin IdeHelperPunches
+ */
 class Punches extends Model
 {
     use HasFactory;

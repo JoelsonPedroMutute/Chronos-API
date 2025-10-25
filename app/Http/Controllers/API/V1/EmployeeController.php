@@ -197,4 +197,5 @@ class EmployeeController extends Controller
             'message' => 'Empregado removido com sucesso.',
         ], 200);
     }
+    
 }

@@ -105,7 +105,7 @@ Route::prefix('v1')->group(function () {
 
         // Criação e listagem
         Route::post('employees', [EmployeeController::class, 'store']);
-        Route::get('employees/profile', [EmployeeController::class, 'profile']); // ✅ corrigido e movido para cima
+        Route::get('employees/profile', [EmployeeController::class, 'profile']); 
         Route::get('employees', [EmployeeController::class, 'index']);
         Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByCompany']);
 
@@ -134,11 +134,7 @@ Route::prefix('v1')->group(function () {
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->group(function () {
         Route::apiResource('employees.image', EmployeeImageController::class)->only([
-            'index',
-            'show',
-            'store',
-            'update',
-            'destroy'
+            'show', 'store', 'update','destroy'
         ]);
     });
 });

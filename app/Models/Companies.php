@@ -10,6 +10,9 @@ use App\Models\Punches;
 use GuzzleHttp\Psr7\Query;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @mixin IdeHelperCompanies
+ */
 class Companies extends Model
 {
     use HasFactory;

@@ -14,14 +14,24 @@ class EmployeeResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Define a imagem final com prioridade: employee -> user -> default
+        $finalImage = null;
+
+        if ($this->image) {
+            $finalImage = asset('storage/' . $this->image);
+        } elseif ($this->user && $this->user->image) {
+            $finalImage = asset('storage/' . $this->user->image);
+        } else {
+            $finalImage = asset('images/default-employee.png');
+        }
         return [
             'id' => $this->id,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'email' => $this->email,
             'phone' => $this->phone_number,
-            'image' => $this->image ? asset('storage/'.$this->image) : null,
-            'has_image' => !is_null($this->image),
+            'image' => $finalImage,
+            'has_image' => $this->image || ($this->user && $this->user->image),
             'address' => $this->address,
             'hire_date' => $this->hire_date,
             'category' => $this->employeeCategory?->name,

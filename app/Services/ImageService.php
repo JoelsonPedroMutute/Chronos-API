@@ -21,8 +21,6 @@ class ImageService
      * Faz upload da imagem com nome único e registra log
      */
     public function uploadImage(UploadedFile $image, string $path, ?string $userId = null)
-
-
     {
         $filename = uniqid("user_{$userId}_") . '.' . $image->getClientOriginalExtension();
         $path = $this->disk->putFileAs($path, $image, $filename);

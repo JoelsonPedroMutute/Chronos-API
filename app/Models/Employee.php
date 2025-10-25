@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Testing\Fluent\Concerns\Has;
 
+/**
+ * @mixin IdeHelperEmployee
+ */
 class Employee extends Model
 {
     use HasFactory, HasUuids;
@@ -39,6 +42,31 @@ class Employee extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+ public function getProfileImageAttribute()
+{
+    // Carrega o relacionamento 'user' se ainda não estiver carregado
+    if (!$this->relationLoaded('user')) {
+        $this->load('user');
+    }
+
+    // Se existir um user associado com imagem, retorna a imagem dele
+    if ($this->user && !empty($this->user->image)) {
+        // Se o caminho for relativo (sem "http"), gera URL pública
+        return str_starts_with($this->user->image, 'http')
+            ? $this->user->image
+            : asset('storage/' . $this->user->image);
+    }
+
+    // Caso contrário, retorna a imagem própria do employee (se tiver)
+    if (!empty($this->image)) {
+        return str_starts_with($this->image, 'http')
+            ? $this->image
+            : asset('storage/' . $this->image);
+    }
+
+    // Se nenhum tiver imagem, usa padrão
+    return asset('images/default-employee.png');
+}
 
 
     public function company()

@@ -1,70 +1,112 @@
 <?php
+
 namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Filesystem\FilesystemAdapter;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+
 
 class EmployeeImageService
-{ protected FilesystemAdapter $disk;
+{
+    protected FilesystemAdapter $disk;
 
     public function __construct()
     {
         $this->disk = Storage::disk('public');
     }
-    public function uploadImage(UploadedFile $image, string $folder, int $employeeId): string
-    {
-        $filename = 'employee_' . $employeeId . '_' . time() . '.' . $image->getClientOriginalExtension();
-        $path = $image->storeAs($folder, $filename, 'public');
 
-        Log::info("Imagem do funcionário {$employeeId} carregada em: {$path}");
+    /**
+     * Faz upload da imagem do funcionário.
+     */
+    public function uploadImage(UploadedFile $image, string $folder, string $employeeId): string
+    {
+        $directory = "{$folder}/{$employeeId}";
+        $filename = 'profile_' . time() . '.' . $image->getClientOriginalExtension();
+
+        $path = $image->storeAs($directory, $filename, 'public');
+
+        Log::info("📤 Imagem do funcionário {$employeeId} carregada em: {$path}");
 
         return $path;
     }
+
+    /**
+     * Retorna a URL pública da imagem.
+     */
     public function showImage(string $path): string
     {
         return $this->disk->url($path);
     }
-    public function getEmployeeImagePath(int $employeeId): ?string
+
+    /**
+     * Retorna o caminho completo da imagem atual de um funcionário.
+     */
+    public function getEmployeeImagePath(string $employeeId): ?string
     {
-        $path = "employees/{$employeeId}/profile.jpg";
+        $directory = "employees/{$employeeId}";
+        $files = $this->disk->files($directory);
 
-        if ($this->disk->exists($path)) {
-            return $path;
-        }
-
-        return null;
+        return count($files) > 0 ? $files[0] : null;
     }
+
+    /**
+     * Faz o download da imagem.
+     */
     public function downloadImage(string $path): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         return $this->disk->download($path);
     }
-    public function deleteImage(int $employeeId): bool
+
+    /**
+     * Deleta a imagem atual de um funcionário.
+     */
+    public function deleteImage(string $employeeId): bool
     {
         $path = $this->getEmployeeImagePath($employeeId);
 
-        if ($path) {
-            return $this->disk->delete($path);
+        if ($path && $this->disk->exists($path)) {
+            $this->disk->delete($path);
+            Log::info("🗑️ Imagem do funcionário {$employeeId} deletada: {$path}");
+            return true;
         }
 
         return false;
     }
-    public function updateImage(UploadedFile $newImage, int $employeeId): string
+
+    /**
+     * Substitui a imagem existente por uma nova.
+     */
+    public function updateImage(UploadedFile $newImage, string $employeeId): string
     {
         $this->deleteImage($employeeId);
-
         return $this->uploadImage($newImage, 'employees', $employeeId);
     }
-    public function cropImage(UploadedFile $croppedImage, int $employeeId): string
-    {
-        $this->deleteImage($employeeId);
 
-        return $this->uploadImage($croppedImage, 'employees', $employeeId);
-    }
-    public function deleteEmployeeImage(int $employeeId): bool
-    {
-        return $this->deleteImage($employeeId);
-    }
-    
+    /**
+     * Recorta e redimensiona a imagem usando Intervention Image.
+     */
+   public function cropImage(UploadedFile $croppedImage, int $employeeId, int $width = 300, int $height = 300): string
+{
+    $this->deleteImage($employeeId);
+
+    $directory = "employees/{$employeeId}";
+    $filename = 'profile_cropped_' . time() . '.' . $croppedImage->getClientOriginalExtension();
+    $path = "{$directory}/{$filename}";
+
+    // ✅ Instancia o novo ImageManager (v3)
+    $manager = new ImageManager(new Driver());
+    $image = $manager->read($croppedImage);
+
+    // Recorta e redimensiona
+    $image = $image->cover($width, $height); // substitui fit()
+    $this->disk->put($path, (string) $image->encode());
+
+    Log::info("✂️ Imagem recortada e salva em: {$path}");
+
+    return $path;
+}
 }

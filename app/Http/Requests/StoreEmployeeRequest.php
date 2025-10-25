@@ -11,8 +11,8 @@ class StoreEmployeeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-       $user = $this->user();
-       return $user && ($user->hasRole('superadmin') || $user->hasRole('admin'));
+        $user = $this->user();
+        return $user && ($user->hasRole('superadmin') || $user->hasRole('admin'));
     }
 
     /**
@@ -24,15 +24,16 @@ class StoreEmployeeRequest extends FormRequest
     {
         return [
             'user_id' => 'nullable|exists:users,id|unique:employees,user_id',
+            'create_user' => 'nullable|boolean',
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:employees',
             'hire_date' => 'required|date|before_or_equal:today',
             'status' => 'required|string|in:active,inactive,on_leave',
             'salary' => 'required|numeric|min:0',
-            'role' => 'required|string|in:admin,employee',
+            'role' => 'nullable|required_if:create_user,true|string|in:superadmin,admin,manager,user',
             'settings' => 'nullable|json',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'nullable|required_if:create_user,true|string|min:8|confirmed',
             'phone_number' => 'nullable|string|max:20',
             'position' => 'required|string|max:100',
             'employee_category_id' => 'nullable|exists:employee_categories,id',
@@ -40,6 +41,7 @@ class StoreEmployeeRequest extends FormRequest
             'company_id' => 'nullable|exists:companies,id',
         ];
     }
+
     public function messages(): array
     {
         return [
@@ -55,7 +57,7 @@ class StoreEmployeeRequest extends FormRequest
             'salary.numeric' => 'O campo salário deve ser um número.',
             'salary.min' => 'O campo salário deve ser um valor positivo.',
             'role.required' => 'O campo função é obrigatório.',
-            'role.in' => 'O campo função deve ser um dos seguintes valores: admin, employee.',
+            'role.in' => 'O campo função deve ser um dos seguintes valores: superadmin, admin, manager, user.',
             'password.required' => 'O campo senha é obrigatório.',
             'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
             'password.confirmed' => 'A confirmação da senha não corresponde.',
