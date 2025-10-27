@@ -73,7 +73,7 @@ class EmployeeImageController extends Controller
     public function show($employeeId)
     {
         $employee = Employee::findOrFail($employeeId);
-        $this->authorize('viewImage', $employee);
+        $this->authorize('manageImage', $employee);
 
         $imagePath = $this->employeeImageService->getEmployeeImagePath($employeeId);
 
@@ -141,7 +141,7 @@ class EmployeeImageController extends Controller
     public function download($employeeId)
     {
         $employee = Employee::findOrFail($employeeId);
-        $this->authorize('viewImage', $employee);
+        $this->authorize('manageImage', $employee);
 
         $imagePath = $this->employeeImageService->getEmployeeImagePath($employeeId);
 
@@ -159,23 +159,38 @@ class EmployeeImageController extends Controller
      * Deleta a imagem de um funcionário.
      */
     public function destroy($employeeId)
-    {
-        $employee = Employee::findOrFail($employeeId);
-        $this->authorize('manageImage', $employee);
+{
+    // Busca o funcionário
+    $employee = Employee::find($employeeId);
 
-        $deleted = $this->employeeImageService->deleteImage($employeeId);
-
-        if ($deleted) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Imagem do funcionário deletada com sucesso.',
-            ], 200);
-        }
-
+    if (!$employee) {
         return response()->json([
             'success' => false,
-            'message' => 'Imagem do funcionário não encontrada para deleção.',
+            'message' => 'Funcionário não encontrado.',
         ], 404);
     }
+
+    // Verifica permissão
+    $this->authorize('manageImage', $employee);
+
+    // Tenta excluir a imagem física
+    $deleted = $this->employeeImageService->deleteImage($employeeId);
+
+    if ($deleted) {
+        // Atualiza o banco, limpando o campo de imagem
+        $employee->update(['image' => null]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Imagem do funcionário excluída com sucesso.',
+        ], 200);
+    }
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Nenhuma imagem foi encontrada para exclusão.',
+    ], 404);
+}
+
      
 }

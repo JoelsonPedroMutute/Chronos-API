@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\API\V1\EmployeeCategoryController;
 use App\Http\Controllers\API\V1\UserController;
 use App\Http\Controllers\API\V1\UserImageController;
 use App\Http\Controllers\API\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\EmployeeImageController;
 use App\Http\Controllers\AuthController;
+use App\Models\EmployeeCategory;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -109,8 +111,6 @@ Route::prefix('v1')->group(function () {
         Route::get('employees', [EmployeeController::class, 'index']);
         Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByCompany']);
 
-
-
         // Visualização individual
         Route::get('employees/{id}', [EmployeeController::class, 'show']);
 
@@ -124,6 +124,14 @@ Route::prefix('v1')->group(function () {
         Route::delete('employees/{employee}', [EmployeeController::class, 'destroy']);
     });
 
+     // EmployeeCategory Routes
+    Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->prefix('employee-categories')->group(function () {
+        Route::get('/', [EmployeeCategoryController::class, 'index']);
+        Route::get('/{category}', [EmployeeCategoryController::class, 'show']);
+        Route::post('/', [EmployeeCategoryController::class, 'store']);
+        Route::put('/{category}', [EmployeeCategoryController::class, 'update']);
+        Route::delete('/{category}', [EmployeeCategoryController::class, 'destroy']);
+
     /*
     |--------------------------------------------------------------------------
     | 🖼️ EMPLOYEE IMAGE ROUTES
@@ -132,9 +140,13 @@ Route::prefix('v1')->group(function () {
     | Apenas superadmin, admin e manager podem manipular.
     | Segue padrão RESTful com apiResource.
     */
-    Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->group(function () {
-        Route::apiResource('employees.image', EmployeeImageController::class)->only([
-            'show', 'store', 'update','destroy'
-        ]);
+   Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->prefix('employees')->group(function () {
+        Route::get('{employee}/image', [EmployeeImageController::class, 'show']);
+        Route::post('{employee}/image', [EmployeeImageController::class, 'store']);
+        Route::get('{employee}/image/download', [EmployeeImageController::class, 'download']);
+        Route::patch('{employee}/image/crop', [EmployeeImageController::class, 'cropImage']);
+        Route::delete('{employee}/image', [EmployeeImageController::class, 'destroy']);
     });
+
+});
 });

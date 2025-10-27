@@ -70,7 +70,7 @@ class EmployeeImageService
 
         if ($path && $this->disk->exists($path)) {
             $this->disk->delete($path);
-            Log::info("🗑️ Imagem do funcionário {$employeeId} deletada: {$path}");
+            Log::info(" Imagem do funcionário {$employeeId} deletada: {$path}");
             return true;
         }
 
@@ -89,23 +89,28 @@ class EmployeeImageService
     /**
      * Recorta e redimensiona a imagem usando Intervention Image.
      */
-   public function cropImage(UploadedFile $croppedImage, int $employeeId, int $width = 300, int $height = 300): string
+  public function cropImage(string $imagePath, int $width = 300, int $height = 300): ?string
 {
-    $this->deleteImage($employeeId);
+    if (!$this->disk->exists($imagePath)) {
+        Log::error("Imagem não encontrada em: {$imagePath}");
+        return null;
+    }
+
+    $employeeId = (int) basename(dirname($imagePath));
 
     $directory = "employees/{$employeeId}";
-    $filename = 'profile_cropped_' . time() . '.' . $croppedImage->getClientOriginalExtension();
+    $filename = 'profile_cropped_' . time() . '.jpeg';
     $path = "{$directory}/{$filename}";
 
-    // ✅ Instancia o novo ImageManager (v3)
     $manager = new ImageManager(new Driver());
-    $image = $manager->read($croppedImage);
+    $image = $manager->read($this->disk->path($imagePath));
 
     // Recorta e redimensiona
-    $image = $image->cover($width, $height); // substitui fit()
+    $image = $image->cover($width, $height);
+
     $this->disk->put($path, (string) $image->encode());
 
-    Log::info("✂️ Imagem recortada e salva em: {$path}");
+    Log::info("Imagem recortada e salva em: {$path}");
 
     return $path;
 }

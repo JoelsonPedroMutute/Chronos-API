@@ -14,7 +14,7 @@ class UserService
 {
     public function getAllFiltered(Request $request)
     {
-        $query = User::with(['employee.company', 'employee.employeeCategory']); // 👈 carrega os relacionamentos
+        $query = User::with(['employee.company', 'employee.employeeCategory']); // carrega os relacionamentos
 
         $filter = new UserFilter($query, $request);
 

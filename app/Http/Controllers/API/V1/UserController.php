@@ -68,10 +68,8 @@ class UserController extends Controller
                 'message' => 'Usuário não encontrado ou foi removido.'
             ], 400);
         }
-
-
+        
         $this->authorize('view', $user);
-
 
         return response()->json([
             'success' => true,
