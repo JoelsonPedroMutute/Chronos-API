@@ -75,7 +75,7 @@ class Employee extends Model
     }
     public function employeeCategory()
     {
-        return $this->belongsTo(Employee_Categories::class);
+        return $this->belongsTo(EmployeeCategory::class);
     }
     public function punches()
     {

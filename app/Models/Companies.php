@@ -40,7 +40,7 @@ class Companies extends Model
     }
     public function employeeCategories()
     {
-        return $this->hasMany(Employee_Categories::class);
+        return $this->hasMany(EmployeeCategory::class);
     }
 
     public function punches()
