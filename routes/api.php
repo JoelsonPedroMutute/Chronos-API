@@ -1,12 +1,12 @@
 <?php
 
+use App\Http\Controllers\API\V1\CompanyController;
 use App\Http\Controllers\API\V1\EmployeeCategoryController;
 use App\Http\Controllers\API\V1\UserController;
 use App\Http\Controllers\API\V1\UserImageController;
 use App\Http\Controllers\API\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\EmployeeImageController;
 use App\Http\Controllers\AuthController;
-use App\Models\EmployeeCategory;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,15 +15,6 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Esta versão segue o padrão RESTful, com rotas agrupadas por entidade e
 | protegidas por autenticação via Sanctum, middleware de status e roles.
-|
-| Estrutura geral:
-|   - Auth Routes
-|   - User Routes
-|   - User Image Routes
-|   - Employee Routes
-|   - Employee Image Routes
-|
-| Cada grupo possui prefixo e middleware específico conforme suas permissões.
 |--------------------------------------------------------------------------
 */
 
@@ -33,8 +24,6 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     | 🔐 AUTH ROUTES
     |--------------------------------------------------------------------------
-    | Rotas responsáveis pela autenticação e recuperação de credenciais.
-    | Acesso público para registro e login; logout protegido.
     */
     Route::prefix('auth')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
@@ -44,17 +33,14 @@ Route::prefix('v1')->group(function () {
         Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
 
         // Recuperação de senha
-        Route::post('/forgot-password', [UserController::class, 'forgotPassword']);
-        Route::post('/reset-password', [UserController::class, 'resetPassword']);
+        Route::post('forgot-password', [UserController::class, 'forgotPassword']);
+        Route::post('reset-password', [UserController::class, 'resetPassword']);
     });
 
     /*
     |--------------------------------------------------------------------------
     | 👤 USER ROUTES
     |--------------------------------------------------------------------------
-    | Rotas de gestão de usuários do sistema (superadmin, admin, manager, user).
-    | Incluem operações de CRUD, mudança de senha, status e role.
-    | Todas as ações exigem autenticação e status ativo.
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager,user'])->group(function () {
 
@@ -66,48 +52,42 @@ Route::prefix('v1')->group(function () {
         // Criação de usuário
         Route::post('users', [UserController::class, 'store']);
 
-        // Atualização de senha (própria ou de outro usuário)
-        Route::patch('/users/password/{id?}', [UserController::class, 'changePassword']);
+        // Atualização de senha
+        Route::patch('users/password/{id?}', [UserController::class, 'changePassword']);
 
         // Atualizações gerais
-        Route::patch('/users/{user}', [UserController::class, 'update']);
-        Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
-        Route::patch('/users/{user}/role', [UserController::class, 'changeRole']);
+        Route::patch('users/{user}', [UserController::class, 'update']);
+        Route::patch('users/{user}/status', [UserController::class, 'updateStatus']);
+        Route::patch('users/{user}/role', [UserController::class, 'changeRole']);
 
-        // Exclusões (própria conta ou de terceiros)
-        Route::delete('/users/me', [UserController::class, 'destroy'])->name('users.me.destroy');
-        Route::delete('/users/{id}', [UserController::class, 'delete'])->name('users.destroy');
+        // Exclusões
+        Route::delete('users/me', [UserController::class, 'destroy'])->name('users.me.destroy');
+        Route::delete('users/{id}', [UserController::class, 'delete'])->name('users.destroy');
     });
 
     /*
     |--------------------------------------------------------------------------
     | 🖼️ USER IMAGE ROUTES
     |--------------------------------------------------------------------------
-    | Gerenciamento de imagem de perfil do usuário.
-    | Cada usuário pode ter apenas uma imagem (avatar).
-    | Acesso protegido por autenticação e role.
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager,user'])->group(function () {
-        Route::get('/users/{user}/image', [UserImageController::class, 'show']);
-        Route::post('/users/{user}/image', [UserImageController::class, 'store']);
-        Route::get('/users/{user}/image/download', [UserImageController::class, 'download']);
+        Route::get('users/{user}/image', [UserImageController::class, 'show']);
+        Route::post('users/{user}/image', [UserImageController::class, 'store']);
+        Route::get('users/{user}/image/download', [UserImageController::class, 'download']);
         Route::patch('users/{user}/image/crop', [UserImageController::class, 'crop']);
-        Route::delete('/users/{user}/image', [UserImageController::class, 'destroy']);
+        Route::delete('users/{user}/image', [UserImageController::class, 'destroy']);
     });
 
     /*
     |--------------------------------------------------------------------------
     | 🧑‍💼 EMPLOYEE ROUTES
     |--------------------------------------------------------------------------
-    | Gestão dos funcionários vinculados a uma empresa.
-    | Apenas superadmin, admin e manager possuem acesso.
-    | Inclui CRUD, vinculação à empresa e atualização de configurações.
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->group(function () {
 
         // Criação e listagem
         Route::post('employees', [EmployeeController::class, 'store']);
-        Route::get('employees/profile', [EmployeeController::class, 'profile']); 
+        Route::get('employees/profile', [EmployeeController::class, 'profile']);
         Route::get('employees', [EmployeeController::class, 'index']);
         Route::get('employees/company/{id}', [EmployeeController::class, 'getEmployeeByCompany']);
 
@@ -120,33 +100,50 @@ Route::prefix('v1')->group(function () {
         Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
         Route::patch('employees/{employee}/role', [EmployeeController::class, 'updateRole']);
 
-        // Exclusão (soft delete)
+        // Exclusão
         Route::delete('employees/{employee}', [EmployeeController::class, 'destroy']);
     });
 
-     // EmployeeCategory Routes
-    Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->prefix('employee-categories')->group(function () {
-        Route::get('/', [EmployeeCategoryController::class, 'index']);
-        Route::get('/{category}', [EmployeeCategoryController::class, 'show']);
-        Route::post('/', [EmployeeCategoryController::class, 'store']);
-        Route::put('/{category}', [EmployeeCategoryController::class, 'update']);
-        Route::delete('/{category}', [EmployeeCategoryController::class, 'destroy']);
+    /*
+    |--------------------------------------------------------------------------
+    | 🏷️ EMPLOYEE CATEGORY ROUTES
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])
+        ->prefix('employee-categories')
+        ->group(function () {
+            Route::get('/', [EmployeeCategoryController::class, 'index']);
+            Route::get('/{category}', [EmployeeCategoryController::class, 'show']);
+            Route::post('/', [EmployeeCategoryController::class, 'store']);
+            Route::patch('/{category}', [EmployeeCategoryController::class, 'update']);
+            Route::delete('/{category}', [EmployeeCategoryController::class, 'destroy']);
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🏢 COMPANY ROUTES
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->prefix('companies')->group(function () {
+            Route::get('/', [CompanyController::class, 'index']);
+            Route::get('/{id}', [CompanyController::class, 'show']);
+            Route::post('/', [CompanyController::class, 'store']);
+            Route::patch('/{id}', [CompanyController::class, 'update']);
+            Route::delete('/{id}', [CompanyController::class, 'destroy']);
+        });
 
     /*
     |--------------------------------------------------------------------------
     | 🖼️ EMPLOYEE IMAGE ROUTES
     |--------------------------------------------------------------------------
-    | Gestão das imagens dos funcionários (fotos profissionais).
-    | Apenas superadmin, admin e manager podem manipular.
-    | Segue padrão RESTful com apiResource.
     */
-   Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->prefix('employees')->group(function () {
-        Route::get('{employee}/image', [EmployeeImageController::class, 'show']);
-        Route::post('{employee}/image', [EmployeeImageController::class, 'store']);
-        Route::get('{employee}/image/download', [EmployeeImageController::class, 'download']);
-        Route::patch('{employee}/image/crop', [EmployeeImageController::class, 'cropImage']);
-        Route::delete('{employee}/image', [EmployeeImageController::class, 'destroy']);
-    });
-
-});
+    Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])
+        ->prefix('employees')
+        ->group(function () {
+            Route::get('{employee}/image', [EmployeeImageController::class, 'show']);
+            Route::post('{employee}/image', [EmployeeImageController::class, 'store']);
+            Route::get('{employee}/image/download', [EmployeeImageController::class, 'download']);
+            Route::patch('{employee}/image/crop', [EmployeeImageController::class, 'cropImage']);
+            Route::delete('{employee}/image', [EmployeeImageController::class, 'destroy']);
+        });
 });

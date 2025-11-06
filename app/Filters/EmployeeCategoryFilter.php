@@ -30,9 +30,7 @@ class EmployeeCategoryFilter extends QueryFilter
         $this->filterByCode();
         $this->filterByCompanyId();
 
-        return $this->query
-            ->orderBy($this->sortBy, $this->sortOrder)
-            ->paginate($this->perPage);
+        return $this->query->orderBy($this->sortBy, $this->sortOrder);
     }
 
     protected function filterByName(): void

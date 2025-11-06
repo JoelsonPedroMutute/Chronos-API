@@ -70,7 +70,16 @@ class EmployeeCategoryPolicy
      */
     public function delete(User $user, EmployeeCategory $employeeCategory): bool
     {
-        // Apenas superadmin pode deletar categorias
-        return $user->hasRole('superadmin');
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        if ($user->hasRole('admin')) {
+            // Admin pode deletar categorias dentro da empresa dele
+            return $user->employee &&
+                   $user->employee->company_id === $employeeCategory->company_id;
+        }
+
+        return false; // Managers e Users não podem deletar categorias
     }
 }

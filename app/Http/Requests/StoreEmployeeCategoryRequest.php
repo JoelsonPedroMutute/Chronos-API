@@ -17,7 +17,7 @@ class StoreEmployeeCategoryRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:employee_categories,code',
-            'company_id' => 'required|uuid|exists:companies,id',
+            'company_id' => 'sometimes|integer|exists:companies,id',
         ];
     }
 

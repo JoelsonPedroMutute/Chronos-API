@@ -9,13 +9,14 @@ use App\Models\Employee_Categories;
 use App\Models\Punches;
 use GuzzleHttp\Psr7\Query;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @mixin IdeHelperCompanies
  */
 class Companies extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
      /** @use HasFactory<\Database\Factories\CompaniesFactory> */
 
@@ -26,8 +27,6 @@ class Companies extends Model
         'phone_number',
         'address',
         'timezone',
-        'branding',
-        'settings',
     ];
 
     public function employees()
