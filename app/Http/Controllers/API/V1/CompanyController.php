@@ -131,7 +131,7 @@ class CompanyController extends Controller
         ], 404);
     }
 
-    $this->authorize('restore', $company); // ✅ PASSA O MODELO
+    $this->authorize('restore', $company); 
 
     if (!$this->companyService->restore($company)) {
         return response()->json([

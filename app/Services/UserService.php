@@ -99,4 +99,14 @@ class UserService
         $user = User::findOrFail($id);
         $user->delete();
     }
+    public function restore(string $id): void
+    {
+        $user = User::withTrashed()->where('id', $id)->firstOrFail();
+
+        if (!$user->trashed()) {
+            throw new Exception('Usuário não está excluído.');
+        }
+
+        $user->restore();
+    }
 }

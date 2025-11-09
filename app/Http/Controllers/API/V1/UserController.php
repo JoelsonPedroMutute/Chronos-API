@@ -48,6 +48,14 @@ class UserController extends Controller
             'data' => UserResource::collection($users),
         ], 200);
     }
+    /*
+      pegar o resource  e não o error , pegar esta estutura como exemplo
+     return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => UserResource::collection($users),
+        ], 200);
+    */
 
     public function profile(Request $request)
     {
@@ -68,7 +76,7 @@ class UserController extends Controller
                 'message' => 'Usuário não encontrado ou foi removido.'
             ], 400);
         }
-        
+
         $this->authorize('view', $user);
 
         return response()->json([
@@ -232,6 +240,26 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Usuário deletado com sucesso.',
+        ], 200);
+    }
+    public function restore(string $id)
+    {
+        $user = User::withTrashed()->find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuário não encontrado ou foi removido.'
+            ], 400);
+        }
+
+        $this->authorize('restore', $user);
+
+        $this->userService->restore($user->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário restaurado com sucesso.',
         ], 200);
     }
 }

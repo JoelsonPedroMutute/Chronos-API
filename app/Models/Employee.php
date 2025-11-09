@@ -8,6 +8,7 @@ use App\Models\Employee_Categories;
 use App\Models\Punches;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Testing\Fluent\Concerns\Has;
 
 /**
@@ -15,7 +16,7 @@ use Illuminate\Testing\Fluent\Concerns\Has;
  */
 class Employee extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
 
     /** @use HasFactory<\Database\Factories\EmployeeFactory> */
 

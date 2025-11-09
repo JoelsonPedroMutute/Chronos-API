@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 
 class EmployeeController extends Controller
@@ -137,7 +138,7 @@ class EmployeeController extends Controller
             'data' => new EmployeeResource($updatedEmployee),
         ], 200);
     }
-     public function updateStatus(Request $request, Employee $employee)
+    public function updateStatus(Request $request, Employee $employee)
     {
         $this->authorize('update', $employee);
 
@@ -153,7 +154,7 @@ class EmployeeController extends Controller
             'data' => new EmployeeResource($employee),
         ], 200);
     }
-     public function updateRole(Request $request, Employee $employee)
+    public function updateRole(Request $request, Employee $employee)
     {
         $this->authorize('update', $employee);
 
@@ -187,9 +188,28 @@ class EmployeeController extends Controller
         ], 200);
     }
 
-    public function destroy(Request $request, Employee $employee)
+    public function destroy(Request $request, string $id)
     {
+        // 1. Se o ID nem for um UUID válido → já retorna
+        if (!Str::isUuid($id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Empregado não encontrado.'
+            ], 404);
+        }
+
+        // 2. Busca segura (inclui registros apagados)
+        $employee = Employee::withTrashed()->where('id', $id)->first();
+
+        if (!$employee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Empregado não encontrado.'
+            ], 404);
+        }
+
         $this->authorize('delete', $employee);
+
         $this->employeeService->delete($employee);
 
         return response()->json([
@@ -197,5 +217,32 @@ class EmployeeController extends Controller
             'message' => 'Empregado removido com sucesso.',
         ], 200);
     }
-    
+
+    public function restore(Request $request, string $id)
+{
+    if (!Str::isUuid($id)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Empregado não encontrado.'
+        ], 404);
+    }
+
+    $employee = Employee::withTrashed()->where('id', $id)->first();
+
+    if (!$employee) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Empregado não encontrado.'
+        ], 404);
+    }
+
+    $this->authorize('restore', $employee);
+    $employee = $this->employeeService->restore($employee);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Empregado restaurado com sucesso.',
+        'data' => new EmployeeResource($employee),
+    ], 200);
+}
 }

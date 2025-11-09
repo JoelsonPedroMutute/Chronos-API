@@ -62,6 +62,20 @@ class EmployeePolicy
         return false;
     }
 
+    public function restore(User $user, Employee $employee): bool
+    {
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        if ($user->hasRole('admin')) {
+            return $user->employee &&
+                $employee->company_id === $user->employee->company_id;
+        }
+
+        return false;
+    }
+
     /**
      * --------------------
      * Permissão funcional baseada na categoria do empregado

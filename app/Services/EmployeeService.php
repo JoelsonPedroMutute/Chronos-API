@@ -258,4 +258,12 @@ class EmployeeService
         }
         $employee->delete();
     }
+    public function restore(Employee $employee): Employee
+    {
+        if(!$employee->trashed()){
+            throw new Exception('Empregado não está excluído.');
+        }
+        $employee->restore();
+        return $employee->fresh();
+    }
 }

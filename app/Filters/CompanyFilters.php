@@ -14,7 +14,7 @@ class CompanyFilters extends QueryFilter
     protected string $sortBy;
     protected string $sortOrder;
     protected ?int $companyId;
-    protected ?bool $trashed;
+    protected ?bool $deleted;
 
     public function __construct(Builder $query, Request $request)
     {
@@ -27,7 +27,7 @@ class CompanyFilters extends QueryFilter
         $this->sortBy = $this->input('sort_by', 'name');
         $this->sortOrder = $this->input('sort_order', 'asc');
         $this->companyId = $this->input('company_id');
-        $this->trashed = $this->input('deleted', false);
+        $this->deleted = $this->input('trashed', false);
     }
 
     public function apply(): Builder
@@ -43,9 +43,9 @@ class CompanyFilters extends QueryFilter
         $this->filterByEmail();
         $this->filterByAddress();
         $this->filterByNif();
-        $this->filterByTrashed();
+        $this->filterByDeleted();
 
-        return $this->query; // Retorna o builder modificado
+        return $this->query; 
     }
 
     protected function filterBySearch(): void
@@ -87,10 +87,19 @@ class CompanyFilters extends QueryFilter
             $this->query->where('nif', 'like', "%{$this->nif}%");
         }
     }
-    public function filterByTrashed(): void
+   public function filterByDeleted(): self
     {
-        if ($this->trashed) {
-            $this->query->onlyTrashed();
+        if ($this->request->filled('trashed')) {
+            if ($this->request->trashed === 'only') {
+                $this->query->onlyTrashed();
+            } elseif ($this->request->trashed === 'with') {
+                $this->query->withTrashed();
+            } else {
+                $this->query->withoutTrashed();
+            }
+        } else {
+            $this->query->withoutTrashed();
         }
+        return $this;
     }
 }

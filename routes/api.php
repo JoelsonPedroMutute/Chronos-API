@@ -10,20 +10,13 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
-|--------------------------------------------------------------------------
-| API Routes - Version 1 (v1)
-|--------------------------------------------------------------------------
-| Esta versão segue o padrão RESTful, com rotas agrupadas por entidade e
-| protegidas por autenticação via Sanctum, middleware de status e roles.
-|--------------------------------------------------------------------------
+ API Routes - Version 1 (v1-
 */
 
 Route::prefix('v1')->group(function () {
 
     /*
-    |--------------------------------------------------------------------------
-    | 🔐 AUTH ROUTES
-    |--------------------------------------------------------------------------
+     AUTH ROUTES-
     */
     Route::prefix('auth')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
@@ -38,9 +31,7 @@ Route::prefix('v1')->group(function () {
     });
 
     /*
-    |--------------------------------------------------------------------------
-    | 👤 USER ROUTES
-    |--------------------------------------------------------------------------
+     USER ROUTES
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager,user'])->group(function () {
 
@@ -59,6 +50,7 @@ Route::prefix('v1')->group(function () {
         Route::patch('users/{user}', [UserController::class, 'update']);
         Route::patch('users/{user}/status', [UserController::class, 'updateStatus']);
         Route::patch('users/{user}/role', [UserController::class, 'changeRole']);
+        Route::patch('users/{user}/restore', [UserController::class, 'restore']);
 
         // Exclusões
         Route::delete('users/me', [UserController::class, 'destroy'])->name('users.me.destroy');
@@ -66,9 +58,7 @@ Route::prefix('v1')->group(function () {
     });
 
     /*
-    |--------------------------------------------------------------------------
-    | 🖼️ USER IMAGE ROUTES
-    |--------------------------------------------------------------------------
+    USER IMAGE ROUTES
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager,user'])->group(function () {
         Route::get('users/{user}/image', [UserImageController::class, 'show']);
@@ -79,9 +69,7 @@ Route::prefix('v1')->group(function () {
     });
 
     /*
-    |--------------------------------------------------------------------------
-    | 🧑‍💼 EMPLOYEE ROUTES
-    |--------------------------------------------------------------------------
+    EMPLOYEE ROUTES
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->group(function () {
 
@@ -101,13 +89,12 @@ Route::prefix('v1')->group(function () {
         Route::patch('employees/{employee}/role', [EmployeeController::class, 'updateRole']);
 
         // Exclusão
-        Route::delete('employees/{employee}', [EmployeeController::class, 'destroy']);
+        Route::delete('employees/{id}', [EmployeeController::class, 'destroy']);
+        Route::patch('employees/{employee}/restore', [EmployeeController::class, 'restore']);
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | 🏷️ EMPLOYEE CATEGORY ROUTES
-    |--------------------------------------------------------------------------
+    /* 
+     EMPLOYEE CATEGORY ROUTES
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])
         ->prefix('employee-categories')
@@ -120,9 +107,7 @@ Route::prefix('v1')->group(function () {
         });
 
     /*
-    |--------------------------------------------------------------------------
-    | 🏢 COMPANY ROUTES
-    |--------------------------------------------------------------------------
+     COMPANY ROUTES
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])->prefix('companies')->group(function () {
             Route::get('/', [CompanyController::class, 'index']);
@@ -130,12 +115,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [CompanyController::class, 'store']);
             Route::patch('/{id}', [CompanyController::class, 'update']);
             Route::delete('/{id}', [CompanyController::class, 'destroy']);
+            Route::patch('/{id}/restore', [CompanyController::class, 'restore']);
         });
 
     /*
-    |--------------------------------------------------------------------------
-    | 🖼️ EMPLOYEE IMAGE ROUTES
-    |--------------------------------------------------------------------------
+    EMPLOYEE IMAGE ROUTES 
     */
     Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])
         ->prefix('employees')

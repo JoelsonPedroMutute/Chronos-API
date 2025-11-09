@@ -110,6 +110,18 @@ class UserPolicy
 
         return false;
     }
+     public function restore(User $authUser, User $model): bool
+   {
+        if ($authUser->hasRole('superadmin')) return true;
+
+        if ($authUser->hasRole('admin'))
+            return !$model->hasRole('superadmin');
+
+        if (in_array($authUser->role, ['manager', 'user']))
+            return $authUser->id === $model->id;
+
+        return false;
+    }
 
     /** --------------------
      * IMAGENS DE PERFIL (mesmo padrão do update/view)

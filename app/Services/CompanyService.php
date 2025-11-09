@@ -23,7 +23,7 @@ class CompanyService
 
     public function findById(string $id): ?Companies
     {
-        return Companies::find($id);
+        return Companies::withTrashed()->find($id);
     }
 
     public function create(array $data)
