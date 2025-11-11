@@ -4,7 +4,9 @@ namespace App\Filters;
 
 use App\Models\Employee;
 use Illuminate\Database\Eloquent\Builder;
-use Request;
+use Illuminate\Http\Request;
+
+
 
 class EmployeeFilter extends QueryFilter
 {
@@ -57,9 +59,11 @@ class EmployeeFilter extends QueryFilter
         $this->filterByEmployeeCategoryId();
         $this->filterByStatus();
         $this->filterByRole();
+        $this->filterByTrashed(); // agora retorna Builder
 
         return $this->query;
     }
+
 
     public function filterBySearch(): void
     {
@@ -133,7 +137,7 @@ class EmployeeFilter extends QueryFilter
         }
     }
 
-    protected function filterByDeleted(): self
+    protected function filterByTrashed(): Builder
     {
         if ($this->request->filled('trashed')) {
             if ($this->request->trashed === 'only') {
@@ -146,6 +150,7 @@ class EmployeeFilter extends QueryFilter
         } else {
             $this->query->withoutTrashed();
         }
-        return $this;
+
+        return $this->query;
     }
 }

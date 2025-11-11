@@ -19,7 +19,7 @@ abstract class QueryFilter
     /**
      * Aplica os filtros concretos definidos nas subclasses.
      */
-    abstract protected function applyFilters(): Builder; 
+    abstract protected function applyFilters(): Builder;
 
     /**
      * Método principal que chama os filtros.
@@ -34,8 +34,9 @@ abstract class QueryFilter
      */
     protected function input(?string $key = null, $default = null)
     {
-        return $this->request->get($key, $default);
+        return $this->request->input($key, $default);
     }
+
 
     /**
      * Helpers para construir consultas dinâmicas.
