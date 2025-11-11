@@ -34,4 +34,5 @@ class Punches extends Model
     {
         return $this->belongsTo(Companies::class);
     }
+    
 }
