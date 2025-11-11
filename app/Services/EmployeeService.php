@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Filters\EmployeeFilter;
 use App\Models\Employee;
+use App\Models\EmployeeCategory;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -15,9 +16,14 @@ use Exception;
 
 class EmployeeService
 {
-    public function getAllFiltered(Request $request)
+    /**
+ * @param \Illuminate\Http\Request $request
+ */
+public function getAllFiltered(Request $request)
+
     {
-        $query = Employee::query(); // inicializa primeiro
+        $query = Employee::with(['user', 'company', 'employeeCategory']);
+
 
         if ($request->has('status')) {
             $status = $request->get('status');
@@ -34,16 +40,17 @@ class EmployeeService
     }
 
 
-    public function getById(string $id, ?Employee $contextEmployee = null): Employee
-    {
-        $query = Employee::where('id', $id);
+   public function getById(string $id, ?Employee $contextEmployee = null): Employee
+{
+    $query = Employee::with(['user', 'company', 'employeeCategory'])
+                     ->where('id', $id);
 
-        if ($contextEmployee) {
-            $query->where('company_id', $contextEmployee->company_id);
-        }
-
-        return $query->firstOrFail();
+    if ($contextEmployee) {
+        $query->where('company_id', $contextEmployee->company_id);
     }
+
+    return $query->firstOrFail();
+}
 
     public function getByCompany(string $companyId): Collection
     {
@@ -194,13 +201,7 @@ class EmployeeService
 
         return $employee;
     }
-
-
-
-
-
-
-    public function update(Employee $employee, array $data): Employee
+     public function update(Employee $employee, array $data): Employee
     {
         if (
             isset($data['email']) &&
@@ -210,9 +211,17 @@ class EmployeeService
             throw new Exception('Email já está em uso.');
         }
 
+        // Se a categoria mudar, sincroniza automaticamente a empresa
+        if (isset($data['employee_category_id'])) {
+            $category = EmployeeCategory::findOrFail($data['employee_category_id']);
+            $data['company_id'] = $category->company_id; 
+            $data['employee_category_id'] = $category->id;
+        }
+
         $employee->update($data);
         return $employee->fresh();
     }
+
     public function updateStatus(Employee $employee, string $status): Employee
     {
         if ($employee->user) {
