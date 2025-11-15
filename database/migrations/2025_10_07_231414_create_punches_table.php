@@ -13,15 +13,17 @@ return new class extends Migration
     {
         Schema::create('punches', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['in', 'out']);
+            $table->enum('type', ['in', 'out', 'break_start', 'break_end']);
             $table->timestampTz('punch_time');
             $table->boolean('auto_closed')->default(false);
-            $table->boolean('extra_time')->default(false);
+            $table->decimal('extra_time', 8, 2)->nullable(); // ✅ Mudou de boolean para decimal
             $table->text('note')->nullable();
+            $table->uuid('employee_id');
+            $table->foreignId('company_id');
             $table->timestamps();
 
-            $table->uuid('employee_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
+            $table->foreign('employee_id')->references('id')->on('employees')->cascadeOnDelete();
+            $table->foreign('company_id')->references('id')->on('companies')->cascadeOnDelete();
         });
     }
 
