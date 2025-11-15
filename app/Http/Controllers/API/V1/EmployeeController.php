@@ -117,7 +117,6 @@ class EmployeeController extends Controller
         $user = $request->user();
         $this->authorize('create', Employee::class);
 
-
         $employee = $this->employeeService->create($request->all());
 
         return response()->json([
@@ -127,6 +126,7 @@ class EmployeeController extends Controller
         ], 201);
     }
 
+    
     public function update(Request $request, Employee $employee)
     {
         $this->authorize('update', $employee);
