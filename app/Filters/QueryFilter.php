@@ -24,7 +24,7 @@ abstract class QueryFilter
     /**
      * Método principal que chama os filtros.
      */
-    public function apply(): Builder
+    public function applySearcchFilter(): Builder
     {
         return $this->applyFilters();
     }

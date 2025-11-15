@@ -30,7 +30,7 @@ class CompanyFilters extends QueryFilter
         $this->deleted = $this->input('trashed', false);
     }
 
-    public function apply(): Builder
+    public function applySearcchFilter(): Builder
     {
         return $this->applyFilters()
             ->orderBy($this->sortBy, $this->sortOrder);

@@ -3,60 +3,32 @@
 namespace App\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
-
 
 class UserFilter extends QueryFilter
 {
-    protected ?string $search;
-    protected ?string $email;
-    protected ?string $phoneNumber;
-    protected ?string $trashed;
-    protected ?string $role;
-    protected ?string $status;
-    protected ?string $name;
-    protected ?string $sortBy;
-    protected ?string $sortOrder;
-    protected ?string $roleRestriction;
-
-    public function __construct(Builder $query, Request $request)
-    {
-        parent::__construct($query, $request);
-
-        $this->search = $this->input('search');
-        $this->email = $this->input('email');
-        $this->phoneNumber = $this->input('phone_number');
-        $this->role = $this->input('role');
-        $this->status = $this->input('status');
-        $this->name = $this->input('name');
-        $this->trashed = $this->input('trashed');
-        $this->sortBy = $this->input('sort_by', 'name');
-        $this->sortOrder = $this->input('sort_order', 'asc');
-        $this->roleRestriction = $this->input('role_restriction');
-    }
-    public function apply(): Builder
-    {
-        return $this->applyFilters()->orderBy($this->sortBy, $this->sortOrder);
-    }
-
+    /**
+     * Aplica todos os filtros e ordenação
+     */
     protected function applyFilters(): Builder
     {
-        $this->filterBySearch();
-        $this->filterByRole();
-        $this->filterByStatus();
-        $this->filterByName();
-        $this->filterByEmail();
-        $this->filterByPhoneNumber();
-        $this->filterByDeleted();
-        $this->filterByRoleRestriction();
+        $this->applySearchFilter();
+        $this->applyEmailFilter();
+        $this->applyPhoneNumberFilter();
+        $this->applyRoleFilter();
+        $this->applyStatusFilter();
+        $this->applyNameFilter();
+        $this->applyTrashedFilter();
+        $this->applyRoleRestrictionFilter();
+        $this->applySorting();
 
         return $this->query;
     }
 
-    protected function filterBySearch(): void
+    protected function applySearchFilter(): void
     {
-        if ($search = $this->input('search')) {
+        $search = $this->input('search');
+        if ($search) {
             $this->query->where(function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
@@ -65,66 +37,74 @@ class UserFilter extends QueryFilter
         }
     }
 
-    protected function setSorting(): void
+    protected function applyEmailFilter(): void
     {
-        $this->sortBy = $this->input('sort_by', 'id');
-        $this->sortOrder = $this->input('sort_order', 'asc');
-    }
-
-    protected function filterByRoleRestriction(): void
-    {
-        if ($roleRestriction = $this->input('role_restriction')) {
-            $this->query->where('role', $roleRestriction);
+        $email = $this->input('email');
+        if ($email) {
+            $this->addLike('email', $email);
         }
     }
 
-    protected function filterByEmail(): void
+    protected function applyPhoneNumberFilter(): void
     {
-        if ($email = $this->input('email')) {
-            $this->query->where('email', 'like', "%{$email}%");
+        $phoneNumber = $this->input('phone_number');
+        if ($phoneNumber) {
+            $this->addLike('phone_number', $phoneNumber);
         }
     }
 
-    protected function filterByName(): void
+    protected function applyRoleFilter(): void
     {
-        if ($name = $this->input('name')) {
-            $this->query->where('name', 'like', "%{$name}%");
+        $role = $this->input('role');
+        if ($role) {
+            $this->addWhere('role', $role);
         }
     }
 
-    protected function filterByPhoneNumber(): void
+    protected function applyStatusFilter(): void
     {
-        if ($phoneNumber = $this->input('phone_number')) {
-            $this->query->where('phone_number', 'like', "%{$phoneNumber}%");
+        $status = $this->input('status');
+        if ($status && in_array($status, ['active', 'inactive', 'pending'])) {
+            $this->addWhere('status', $status);
         }
     }
-    protected function filterByStatus(): void
+
+    protected function applyNameFilter(): void
     {
-        if ($status = $this->input('status')) {
-            if (in_array($status, ['active', 'inactive', 'pending'])) {
-                $this->query->where('status', $status);
-            }
+        $name = $this->input('name');
+        if ($name) {
+            $this->addLike('name', $name);
         }
     }
-     protected function filterByRole(): void
+
+    protected function applyRoleRestrictionFilter(): void
     {
-        if ($role = $this->input('role')) {
-            $this->query->where('role', $role);
+        $roleRestriction = $this->input('role_restriction');
+        if ($roleRestriction) {
+            $this->addWhere('role', $roleRestriction);
         }
     }
-    protected function filterByDeleted(): self
+
+    protected function applyTrashedFilter(): void
     {
-        if ($this->request->filled('trashed')) {
-            if ($this->request->trashed === 'only') {
+        $trashed = $this->input('trashed');
+        if ($trashed) {
+            if ($trashed === 'only') {
                 $this->query->onlyTrashed();
-            } elseif ($this->request->trashed === 'with') {
+            } elseif ($trashed === 'with') {
                 $this->query->withTrashed();
-            } else {
-                $this->query->withoutTrashed();
             }
-        } else {
-            $this->query->withoutTrashed();
         }
-        return $this;
+    }
+
+    protected function applySorting(): void
+    {
+        $sortBy = $this->input('sort_by', 'name');
+        $sortOrder = $this->input('sort_order', 'asc');
+        
+        $validSortColumns = ['id', 'name', 'email', 'created_at', 'updated_at'];
+        $sortBy = in_array($sortBy, $validSortColumns) ? $sortBy : 'name';
+        
+        $this->query->orderBy($sortBy, $sortOrder);
     }
 }
