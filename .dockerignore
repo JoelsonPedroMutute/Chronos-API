@@ -1,0 +1,32 @@
+# VCS
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# Composer (vendor será construído no estágio vendor)
+vendor
+
+# Ambiente
+.env
+.env.*
+*.log
+
+# IDE helpers
+_ide_helper.php
+_ide_helper_models.php
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Caches gerados em runtime (não precisam no contexto de build)
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+bootstrap/cache/*
