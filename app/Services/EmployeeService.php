@@ -124,7 +124,7 @@ public function getAllFiltered(Request $request)
         }
 
 
-        // 🔹 2. Se tiver o campo 'name', separa em 'first_name' e 'last_name'
+        //  2. Se tiver o campo 'name', separa em 'first_name' e 'last_name'
         if (!empty($data['name'])) {
             $parts = explode(' ', trim($data['name']), 2);
             $data['first_name'] = $parts[0];
@@ -132,7 +132,7 @@ public function getAllFiltered(Request $request)
             unset($data['name']);
         }
 
-        // 🔹 3. Verifica se o hire_date é uma data futura
+        //  3. Verifica se o hire_date é uma data futura
         if (!empty($data['hire_date'])) {
             $hireDate = Carbon::parse($data['hire_date']);
             if ($hireDate->isFuture()) {
@@ -140,7 +140,7 @@ public function getAllFiltered(Request $request)
             }
         }
 
-        // 🔹 4. Define o company_id herdado do user autenticado (caso não venha no request)
+        //  4. Define o company_id herdado do user autenticado (caso não venha no request)
         $data['company_id'] = $data['company_id'] ?? $authUser->employee?->company_id ?? null;
 
         // 🔹 5. Define campos opcionais com valor padrão
@@ -153,7 +153,7 @@ public function getAllFiltered(Request $request)
 
         $user = null;
 
-        // 🔹 6. Se 'user_id' foi informado, associa o funcionário ao usuário existente
+        //  6. Se 'user_id' foi informado, associa o funcionário ao usuário existente
         if (!empty($data['user_id'])) {
             $user = User::find($data['user_id']);
 
@@ -168,7 +168,7 @@ public function getAllFiltered(Request $request)
             $data['user_id'] = $user->id;
         }
 
-        // 🔹 7. Se 'create_user' = true, cria uma conta de acesso vinculada
+        //  7. Se 'create_user' = true, cria uma conta de acesso vinculada
         elseif (!empty($data['create_user']) && $data['create_user'] === true) {
             $validRoles = ['superadmin', 'admin', 'manager', 'user'];
             $role = in_array($data['role'] ?? '', $validRoles) ? $data['role'] : 'user';
@@ -188,15 +188,25 @@ public function getAllFiltered(Request $request)
             $data['status'] = $user->status;
         }
 
-        // 🔹 8. Caso contrário, cria apenas o empregado (sem conta de acesso)
+        //  8. Caso contrário, cria apenas o empregado (sem conta de acesso)
         else {
             $data['user_id'] = null;
         }
+        //  9. Herdar a position de departament da categoria, se exitir e se não vier no payload
+        if (!empty($data['employee_category_id'])) {
+            $category = EmployeeCategory::findOrFail($data['employee_category_id']);
+            $data['position'] = $data['position'] ?? $category->position;
+        }
+        // Herdar o department da categoria, se exitir e se não vier no payload
+        if (!empty($data['employee_category_id'])) {
+            $category = EmployeeCategory::findOrFail($data['employee_category_id']);
+            $data['department'] = $data['department'] ?? $category->department;
+        }
 
-        // 🔹 9. Cria o Employee
+        //  10. Cria o Employee
         $employee = Employee::create($data);
 
-        // 🔹 10. Carrega as relações úteis
+        //  11. Carrega as relações úteis
         $employee->load('user', 'company', 'employeeCategory');
 
         return $employee;

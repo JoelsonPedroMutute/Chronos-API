@@ -15,7 +15,7 @@ class CompanyService
     {
         $query = Companies::query();
         $filter = new CompanyFilters($query, $request);
-        $filtered = $filter->apply();
+        $filtered = $filter->applySearcchFilter();
 
         $perPage = (int) $request->get('per_page', 10);
         return $filtered->paginate($perPage);
