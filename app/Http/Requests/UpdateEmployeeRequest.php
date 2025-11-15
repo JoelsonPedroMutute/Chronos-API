@@ -56,6 +56,7 @@ class UpdateEmployeeRequest extends FormRequest
                 'settings' => 'nullable|json',
                 'password' => 'sometimes|required|string|min:8|confirmed',
                 'phone_number' => 'nullable|string|max:20',
+                'department' => 'sometimes|required|string|max:100',
                 'position' => 'sometimes|required|string|max:100',
                 'employee_category_id' => 'nullable|exists:employee_categories,id',
                 'address' => 'nullable|string|max:500',
