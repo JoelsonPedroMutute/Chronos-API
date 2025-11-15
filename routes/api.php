@@ -6,6 +6,7 @@ use App\Http\Controllers\API\V1\UserController;
 use App\Http\Controllers\API\V1\UserImageController;
 use App\Http\Controllers\API\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\EmployeeImageController;
+use App\Http\Controllers\API\V1\PunchController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -117,6 +118,16 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}', [CompanyController::class, 'destroy']);
             Route::patch('/{id}/restore', [CompanyController::class, 'restore']);
         });
+
+        Route::middleware(['auth:sanctum', 'active', 'role:superadmin,admin,manager'])
+            ->prefix('punches')
+            ->group(function () {
+                Route::get('/', [PunchController::class, 'index']);
+                Route::get('/{id}', [PunchController::class, 'show']);
+                Route::post('/', [PunchController::class, 'store']);
+                Route::patch('/{id}', [PunchController::class, 'update']);
+                Route::delete('/{id}', [PunchController::class, 'destroy']);
+            });
 
     /*
     EMPLOYEE IMAGE ROUTES 
